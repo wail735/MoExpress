@@ -9,13 +9,13 @@ import { getAuth, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 
 // Web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyAwrYSjh67npzQTmzLTuZYMZNsqM8ZlWJA",
-  authDomain: "moexpress-8da47.firebaseapp.com",
-  projectId: "moexpress-8da47",
-  storageBucket: "moexpress-8da47.firebasestorage.app",
-  messagingSenderId: "264030666054",
-  appId: "1:264030666054:web:fce5e26afdf2bcf5067947",
-  measurementId: "G-81GDSBH6PM"
+  apiKey: "AIzaSyDBqMTA_xISpB5ximdNMbABKXL2oNWayic",
+  authDomain: "moexpress-7f966.firebaseapp.com",
+  projectId: "moexpress-7f966",
+  storageBucket: "moexpress-7f966.firebasestorage.app",
+  messagingSenderId: "928016085039",
+  appId: "1:928016085039:web:df640dabc6c48a005396da",
+  measurementId: "G-X2J7FEYXL2"
 };
 
 // Initialize Firebase
