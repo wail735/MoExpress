@@ -18,6 +18,8 @@ import Home from "./pages/public/Home";
 import ProductCatalog from "./pages/public/ProductCatalog";
 import ProductDetail from "./pages/public/ProductDetail";
 import CartCheckout from "./pages/public/CartCheckout";
+import PaymentSuccess from "./pages/public/PaymentSuccess";
+import PaymentCancel from "./pages/public/PaymentCancel";
 import BoutiqueProfile from "./pages/public/BoutiqueProfile";
 import BrandDirectory from "./pages/public/BrandDirectory";
 import BulkRFQRequest from "./pages/public/BulkRFQRequest";
@@ -172,6 +174,8 @@ export default function App() {
           <Route path="/product/:id" element={<ProductDetail />} />
           <Route path="/products/:id" element={<ProductDetail />} />
           <Route path="/cart" element={<CartCheckout />} />
+          <Route path="/payment/success" element={<PaymentSuccess />} />
+          <Route path="/payment/cancel" element={<PaymentCancel />} />
           <Route path="/boutique/:id" element={<BoutiqueProfile />} />
           <Route path="/brands" element={<BrandDirectory />} />
           <Route path="/rfq" element={<BulkRFQRequest />} />
