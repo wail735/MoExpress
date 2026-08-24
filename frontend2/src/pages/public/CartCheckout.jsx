@@ -7,6 +7,7 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ShoppingCart, Trash2, ShieldCheck, CreditCard, Upload, CheckCircle, ArrowRight } from "lucide-react";
 import { useCart } from "../../context/CartContext";
+import apiClient from "../../api/apiClient";
 import { useCurrency } from "../../context/CurrencyContext";
 import { useNotification } from "../../context/NotificationContext";
 import { useAuth } from "../../context/AuthContext";
@@ -43,30 +44,21 @@ export const CartCheckout = () => {
 
     try {
       // Redirect all payment options to Stripe Checkout
-      const token = localStorage.getItem("token");
-      const res = await fetch("/api/v1/payments/stripe/checkout", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          paymentType: "order",
-          referenceId: "ORD_" + Date.now(),
-          amount: subtotal,
-          description: `Order of ${cartItems.length} items on MoExpress`,
-        }),
+      const data = await apiClient.post("/payments/stripe/checkout", {
+        paymentType: "order",
+        referenceId: "ORD_" + Date.now(),
+        amount: subtotal,
+        description: `Order of ${cartItems.length} items on MoExpress`,
       });
-      const data = await res.json();
-      if (data.success && data.data?.checkoutUrl) {
+      if (data?.data?.checkoutUrl) {
         window.location.href = data.data.checkoutUrl;
         return;
       }
-      if (data.success && data.data?.url) {
+      if (data?.data?.url) {
         window.location.href = data.data.url;
         return;
       }
-      addToast(data.message || "Failed to initiate Stripe payment. Please try again.", "error");
+      addToast("Failed to initiate Stripe payment. Please try again.", "error");
 
       // Bank RIB Proof File Upload via Multer
       if (proofFile) {
@@ -350,4 +342,6 @@ export const CartCheckout = () => {
 };
 
 export default CartCheckout;
+
+
 

@@ -26,6 +26,7 @@ import { useCart } from "../../context/CartContext";
 import { useWishlist } from "../../context/WishlistContext";
 import { useNotification } from "../../context/NotificationContext";
 import { useAuth } from "../../context/AuthContext";
+import apiClient from "../../api/apiClient";
 
 export const ProductDetail = () => {
   const { id } = useParams();
@@ -136,26 +137,17 @@ export const ProductDetail = () => {
     addToCart(currentProduct, quantity);
     addToast("Redirecting to Stripe Checkout...", "success");
     try {
-      const token = localStorage.getItem("token");
-      const res = await fetch("/api/v1/payments/stripe/checkout", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          paymentType: "order",
-          referenceId: "ORD_" + Date.now(),
-          amount: (currentProduct.price || 0) * quantity,
-          description: `${currentProduct.name} (x${quantity}) on MoExpress`,
-        }),
+      const data = await apiClient.post("/payments/stripe/checkout", {
+        paymentType: "order",
+        referenceId: "ORD_" + Date.now(),
+        amount: (currentProduct.price || 0) * quantity,
+        description: `${currentProduct.name} (x${quantity}) on MoExpress`,
       });
-      const data = await res.json();
-      if (data.success && data.data?.checkoutUrl) {
+      if (data?.data?.checkoutUrl) {
         window.location.href = data.data.checkoutUrl;
         return;
       }
-      if (data.success && data.data?.url) {
+      if (data?.data?.url) {
         window.location.href = data.data.url;
         return;
       }
@@ -475,4 +467,6 @@ export const ProductDetail = () => {
 };
 
 export default ProductDetail;
+
+
 

@@ -2,6 +2,7 @@
 import { useNavigate } from "react-router-dom";
 import { Award, ShieldCheck, Check, Sparkles, Zap, CreditCard, Lock, X, ArrowRight } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
+import apiClient from "../../api/apiClient";
 import { useCurrency } from "../../context/CurrencyContext";
 import { useNotification } from "../../context/NotificationContext";
 
@@ -30,30 +31,21 @@ export const Subscriptions = () => {
     }
     setLoading(true);
     try {
-      const token = localStorage.getItem("token");
-      const res = await fetch("/api/v1/payments/stripe/checkout", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          paymentType: "subscription",
-          referenceId: plan.id,
-          amount: plan.price,
-          description: `${plan.name} Subscription Plan Upgrade`,
-        }),
+      const data = await apiClient.post("/payments/stripe/checkout", {
+        paymentType: "subscription",
+        referenceId: plan.id,
+        amount: plan.price,
+        description: `${plan.name} Subscription Plan Upgrade`,
       });
-      const data = await res.json();
-      if (data.success && data.data?.checkoutUrl) {
+      if (data?.data?.checkoutUrl) {
         window.location.href = data.data.checkoutUrl;
         return;
       }
-      if (data.success && data.data?.url) {
+      if (data?.data?.url) {
         window.location.href = data.data.url;
         return;
       }
-      addToast(data.message || "Failed to initiate Stripe payment. Please try again.", "error");
+      addToast("Failed to initiate Stripe payment. Please try again.", "error");
     } catch (err) {
       addToast("Payment processing error. Please try again.", "error");
     } finally {
@@ -163,4 +155,6 @@ export const Subscriptions = () => {
 };
 
 export default Subscriptions;
+
+
 
