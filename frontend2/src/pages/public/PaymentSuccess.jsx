@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { CheckCircle } from "lucide-react";
-import { useCart } from "../../../context/CartContext";
+import { useCart } from "../../context/CartContext";
 
 export const PaymentSuccess = () => {
   const [searchParams] = useSearchParams();
