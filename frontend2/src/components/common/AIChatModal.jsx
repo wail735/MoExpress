@@ -124,8 +124,12 @@ export const AIChatModal = ({ isOpen, onClose }) => {
             <div className="pt-2 w-full max-w-xs space-y-2">
               <button
                 onClick={() => {
-                  onClose();
-                  navigate(isAuthenticated ? "/subscriptions" : "/login");
+                  if (window.location.pathname === "/ai-chat") {
+                    navigate(isAuthenticated ? "/subscriptions" : "/login");
+                  } else {
+                    onClose();
+                    navigate(isAuthenticated ? "/subscriptions" : "/login");
+                  }
                 }}
                 className="w-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white text-xs font-bold py-3 rounded-xl shadow-xs transition flex items-center justify-center gap-1.5"
               >
