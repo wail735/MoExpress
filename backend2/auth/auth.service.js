@@ -1,4 +1,4 @@
-﻿// ============================================================================
+// ============================================================================
 // FICHIER : backend 2/auth/auth.service.js
 // RÃ”LE : Logique mÃ©tier d'authentification (JWT, Bcrypt, Inscription, Connexion, Reset Password)
 // ============================================================================
@@ -135,7 +135,7 @@ export const googleLogin = async ({ email, name, photoURL, uid }) => {
     });
   }
 
-  const token = generateToken(user._id);
+  const token = generateToken(user._id, user.role);
 
   return {
     user: {
