@@ -1,4 +1,4 @@
-// ============================================================================
+﻿// ============================================================================
 // PAGE : CartCheckout.jsx
 // ROLE : Shopping Cart, Checkout & Multi-Payment (Stripe, RIB, RIP, Coins, Proof Upload)
 // ============================================================================
@@ -42,42 +42,31 @@ export const CartCheckout = () => {
     setLoading(true);
 
     try {
-      if (paymentMethod === "stripe") {
-        const token = localStorage.getItem("token");
-        const res = await fetch("/api/v1/payments/stripe/checkout", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            paymentType: "order",
-            referenceId: "ORD_" + Date.now(),
-            amount: subtotal,
-            description: `Order of ${cartItems.length} items on MoExpress`,
-          }),
-        });
-        const data = await res.json();
-        if (data.success && data.data?.url) {
-          window.location.href = data.data.url;
-          return;
-        }
-      } else if (paymentMethod === "algerian_cib") {
-        addToast("Satim CIB 3D-Secure Authorized! Order confirmed with Escrow Guarantee.", "success");
-        clearCart();
-        navigate("/orders");
-        return;
-      } else if (paymentMethod === "algerian_ccp") {
-        addToast("Edahabia CCP Transfer Submitted! Payment receipt received for Escrow clearance.", "success");
-        clearCart();
-        navigate("/orders");
-        return;
-      } else if (paymentMethod === "coins") {
-        addToast("Order placed using Coins Wallet Balance!", "success");
-        clearCart();
-        navigate("/orders");
+      // Redirect all payment options to Stripe Checkout
+      const token = localStorage.getItem("token");
+      const res = await fetch("/api/v1/payments/stripe/checkout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          paymentType: "order",
+          referenceId: "ORD_" + Date.now(),
+          amount: subtotal,
+          description: `Order of ${cartItems.length} items on MoExpress`,
+        }),
+      });
+      const data = await res.json();
+      if (data.success && data.data?.checkoutUrl) {
+        window.location.href = data.data.checkoutUrl;
         return;
       }
+      if (data.success && data.data?.url) {
+        window.location.href = data.data.url;
+        return;
+      }
+      addToast(data.message || "Failed to initiate Stripe payment. Please try again.", "error");
 
       // Bank RIB Proof File Upload via Multer
       if (proofFile) {
@@ -218,7 +207,7 @@ export const CartCheckout = () => {
                   onChange={() => setPaymentMethod("algerian_ccp")}
                 />
                 <ShieldCheck className="w-4 h-4 text-amber-500" />
-                <span>Edahabia CCP (Algérie Poste / BaridiMob)</span>
+                <span>Edahabia CCP (AlgÃ©rie Poste / BaridiMob)</span>
               </label>
 
               <label
@@ -281,7 +270,7 @@ export const CartCheckout = () => {
                   <CreditCard className="w-4 h-4 text-orange-500" /> Satim CIB Interbank Gateway:
                 </p>
                 <div className="space-y-1 font-mono text-[11px] text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-900 p-2.5 rounded-xl border border-slate-200 dark:border-slate-800">
-                  <p>Provider: {bankDetails?.algerianCibCard?.providerName || "Satim CIB Algérie (Carte Interbancaire)"}</p>
+                  <p>Provider: {bankDetails?.algerianCibCard?.providerName || "Satim CIB AlgÃ©rie (Carte Interbancaire)"}</p>
                   <p>Merchant: {bankDetails?.algerianCibCard?.merchantName || "MoExpress E-Commerce SARL"}</p>
                   <p className="text-orange-500 font-bold">Satim Security: 3D-Secure Instant Escrow Authorization</p>
                 </div>
@@ -292,11 +281,11 @@ export const CartCheckout = () => {
             {paymentMethod === "algerian_ccp" && (
               <div className="p-4 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-2 text-xs">
                 <p className="font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
-                  <ShieldCheck className="w-4 h-4 text-amber-500" /> Algérie Poste (CCP / BaridiMob):
+                  <ShieldCheck className="w-4 h-4 text-amber-500" /> AlgÃ©rie Poste (CCP / BaridiMob):
                 </p>
                 <div className="space-y-1 font-mono text-[11px] text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-900 p-2.5 rounded-xl border border-slate-200 dark:border-slate-800">
                   <p>Account Owner: {bankDetails?.posteAlgerienneRip?.ownerName || "MoExpress E-Commerce SARL"}</p>
-                  <p className="text-amber-500 font-bold">CCP Account: {bankDetails?.posteAlgerienneRip?.ccpAccount || "0021489012 Clé 89"}</p>
+                  <p className="text-amber-500 font-bold">CCP Account: {bankDetails?.posteAlgerienneRip?.ccpAccount || "0021489012 ClÃ© 89"}</p>
                   <p className="text-orange-500 font-bold">RIP: {bankDetails?.posteAlgerienneRip?.rip || "00799999002148901289 22"}</p>
                   <p>BaridiMob Tag: {bankDetails?.posteAlgerienneRip?.baridiMobTag || "BARIDI_MOEXPRESS_OFFICIAL"}</p>
                 </div>
@@ -311,7 +300,7 @@ export const CartCheckout = () => {
                 </p>
                 {paymentMethod === "algerian_rib" && (
                   <div className="space-y-1 font-mono text-[11px] text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-900 p-2.5 rounded-xl border border-slate-200 dark:border-slate-800">
-                    <p>Bank: {bankDetails?.algerianBankRib?.bankName || "Banque Nationale d'Algérie (BNA)"}</p>
+                    <p>Bank: {bankDetails?.algerianBankRib?.bankName || "Banque Nationale d'AlgÃ©rie (BNA)"}</p>
                     <p>Owner: {bankDetails?.algerianBankRib?.ownerName || "MoExpress E-Commerce SARL"}</p>
                     <p className="text-orange-500 font-bold">RIB: {bankDetails?.algerianBankRib?.rib || "00100 234567890123456 78"}</p>
                   </div>
@@ -361,3 +350,4 @@ export const CartCheckout = () => {
 };
 
 export default CartCheckout;
+

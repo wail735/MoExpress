@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+﻿import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Award, ShieldCheck, Check, Sparkles, Zap, CreditCard, Lock, X, ArrowRight } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
@@ -22,59 +22,48 @@ export const Subscriptions = () => {
     { id: "plan_enterprise", name: "Enterprise", price: 49.99, coinsBonus: 1000, noAds: true, includesProShop: true, features: ["Pro Shop + Supplier Badge", "Dedicated Account Manager", "30% Discount", "1000 Coins Bonus"] },
   ];
 
-  const handleOpenSubscribeModal = (plan) => {
+  const handleOpenSubscribeModal = async (plan) => {
     if (!isAuthenticated) {
       addToast("Please log in to your account to subscribe to a membership plan!", "warning");
       navigate("/login");
       return;
     }
-    setSelectedPlan(plan);
-  };
-
-  const handleProcessPayment = async () => {
-    if (!selectedPlan) return;
     setLoading(true);
-
     try {
-      if (paymentMethod === "stripe") {
-        const token = localStorage.getItem("token");
-        const res = await fetch("/api/v1/payments/stripe/checkout", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            paymentType: "subscription",
-            referenceId: selectedPlan.id,
-            amount: selectedPlan.price,
-            description: `${selectedPlan.name} Subscription Plan Upgrade`,
-          }),
-        });
-        const data = await res.json();
-        if (data.success && data.data?.url) {
-          window.location.href = data.data.url;
-          return;
-        }
-      }
-
-      // Successful Payment Confirmation
-      updateUserProfile({
-        subscription: { plan: selectedPlan.name, expiryDate: new Date(Date.now() + 30 * 86400000) },
-        noAds: true,
-        isProShop: selectedPlan.includesProShop ? true : user?.isProShop,
-        isSupplier: selectedPlan.includesProShop ? true : user?.isSupplier,
-        role: selectedPlan.includesProShop ? "seller" : user?.role,
-        coins: (user?.coins || 0) + selectedPlan.coinsBonus,
+      const token = localStorage.getItem("token");
+      const res = await fetch("/api/v1/payments/stripe/checkout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          paymentType: "subscription",
+          referenceId: plan.id,
+          amount: plan.price,
+          description: `${plan.name} Subscription Plan Upgrade`,
+        }),
       });
-
-      addToast(`Payment Confirmed! Successfully subscribed to ${selectedPlan.name} Plan.`, "success");
-      setSelectedPlan(null);
+      const data = await res.json();
+      if (data.success && data.data?.checkoutUrl) {
+        window.location.href = data.data.checkoutUrl;
+        return;
+      }
+      if (data.success && data.data?.url) {
+        window.location.href = data.data.url;
+        return;
+      }
+      addToast(data.message || "Failed to initiate Stripe payment. Please try again.", "error");
     } catch (err) {
       addToast("Payment processing error. Please try again.", "error");
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleProcessPayment = async () => {
+    if (!selectedPlan) return;
+    handleOpenSubscribeModal(selectedPlan);
   };
 
   return (
@@ -150,11 +139,11 @@ export const Subscriptions = () => {
                 </label>
                 <label className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition ${paymentMethod === "cib" ? "border-orange-500 bg-orange-500/10 font-bold text-orange-500" : "border-slate-200 dark:border-slate-800"}`}>
                   <input type="radio" name="sub_pay" value="cib" checked={paymentMethod === "cib"} onChange={() => setPaymentMethod("cib")} />
-                  <span>Satim CIB Algérie (Carte Interbancaire)</span>
+                  <span>Satim CIB AlgÃ©rie (Carte Interbancaire)</span>
                 </label>
                 <label className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition ${paymentMethod === "ccp" ? "border-orange-500 bg-orange-500/10 font-bold text-orange-500" : "border-slate-200 dark:border-slate-800"}`}>
                   <input type="radio" name="sub_pay" value="ccp" checked={paymentMethod === "ccp"} onChange={() => setPaymentMethod("ccp")} />
-                  <span>Edahabia CCP (Algérie Poste / BaridiMob)</span>
+                  <span>Edahabia CCP (AlgÃ©rie Poste / BaridiMob)</span>
                 </label>
               </div>
             </div>
@@ -174,3 +163,4 @@ export const Subscriptions = () => {
 };
 
 export default Subscriptions;
+

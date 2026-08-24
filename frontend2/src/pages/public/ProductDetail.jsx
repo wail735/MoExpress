@@ -1,4 +1,4 @@
-// ============================================================================
+﻿// ============================================================================
 // PAGE : ProductDetail.jsx
 // ROLE : Product Details, Image Gallery, Meta Ads Tracking Link, Badges & Reviews
 // ============================================================================
@@ -127,15 +127,43 @@ export const ProductDetail = () => {
       });
   };
 
-  const handleBuyNow = () => {
+  const handleBuyNow = async () => {
     if (!user) {
       addToast("Please log in to complete instant checkout!", "warning");
       navigate("/login");
       return;
     }
     addToCart(currentProduct, quantity);
-    addToast("Redirecting to Checkout...", "success");
-    navigate("/cart");
+    addToast("Redirecting to Stripe Checkout...", "success");
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch("/api/v1/payments/stripe/checkout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          paymentType: "order",
+          referenceId: "ORD_" + Date.now(),
+          amount: (currentProduct.price || 0) * quantity,
+          description: `${currentProduct.name} (x${quantity}) on MoExpress`,
+        }),
+      });
+      const data = await res.json();
+      if (data.success && data.data?.checkoutUrl) {
+        window.location.href = data.data.checkoutUrl;
+        return;
+      }
+      if (data.success && data.data?.url) {
+        window.location.href = data.data.url;
+        return;
+      }
+      // Fallback to cart if Stripe session fails
+      navigate("/cart");
+    } catch (err) {
+      navigate("/cart");
+    }
   };
 
   const currentProduct = product || {
@@ -215,7 +243,7 @@ export const ProductDetail = () => {
         <div className="space-y-6">
           <div>
             <span className="text-xs font-bold uppercase tracking-wider text-amber-500">
-              {product?.category || "Electronics"} • {product?.brand || "MoExpress Pro"}
+              {product?.category || "Electronics"} â€¢ {product?.brand || "MoExpress Pro"}
             </span>
             <h1 className="text-2xl sm:text-4xl font-extrabold text-slate-900 dark:text-white mt-1 leading-snug">
               {product?.name || "Sony WH-1000XM5 Wireless Headphones"}
@@ -245,7 +273,7 @@ export const ProductDetail = () => {
               <span className="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">-30% OFF</span>
             </div>
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              Tax included • Free Shipping worldwide on orders over $10
+              Tax included â€¢ Free Shipping worldwide on orders over $10
             </p>
           </div>
 
@@ -371,7 +399,7 @@ export const ProductDetail = () => {
                 <h4 className="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-1">
                   Official Boutique Pro Shop <Award className="w-4 h-4 text-orange-500" />
                 </h4>
-                <p className="text-xs text-gray-500">Certified Supplier • 99.4% Positive Feedback</p>
+                <p className="text-xs text-gray-500">Certified Supplier â€¢ 99.4% Positive Feedback</p>
               </div>
             </div>
             <Link
@@ -400,11 +428,11 @@ export const ProductDetail = () => {
               onChange={(e) => setNewRating(Number(e.target.value))}
               className="bg-gray-100 dark:bg-gray-800 text-xs px-3 py-1.5 rounded-xl text-slate-900 dark:text-white"
             >
-              <option value="5">⭐⭐⭐⭐⭐ (5/5)</option>
-              <option value="4">⭐⭐⭐⭐ (4/5)</option>
-              <option value="3">⭐⭐⭐ (3/5)</option>
-              <option value="2">⭐⭐ (2/5)</option>
-              <option value="1">⭐ (1/5)</option>
+              <option value="5">â­â­â­â­â­ (5/5)</option>
+              <option value="4">â­â­â­â­ (4/5)</option>
+              <option value="3">â­â­â­ (3/5)</option>
+              <option value="2">â­â­ (2/5)</option>
+              <option value="1">â­ (1/5)</option>
             </select>
           </div>
           <textarea
@@ -447,3 +475,4 @@ export const ProductDetail = () => {
 };
 
 export default ProductDetail;
+
