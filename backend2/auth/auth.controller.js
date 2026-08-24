@@ -1,6 +1,6 @@
-// ============================================================================
+﻿// ============================================================================
 // FICHIER : backend 2/auth/auth.controller.js
-// RÔLE : Contrôleur gérant les requêtes HTTP d'authentification
+// RÃ”LE : ContrÃ´leur gÃ©rant les requÃªtes HTTP d'authentification
 // ============================================================================
 
 // 1. Importation du service d'authentification
@@ -10,23 +10,23 @@ import * as authService from "./auth.service.js";
 import { registerDTO, loginDTO, forgotPasswordDTO, resetPasswordDTO } from "./auth.dto.js";
 
 /**
- * Contrôleur d'inscription (Signup)
+ * ContrÃ´leur d'inscription (Signup)
  */
 export const register = async (req, res, next) => {
   try {
-    // Valide le corps de la requête avec Joi DTO
+    // Valide le corps de la requÃªte avec Joi DTO
     const { error, value } = registerDTO.validate(req.body);
     if (error) {
       return res.status(400).json({ success: false, message: error.details[0].message });
     }
 
-    // Exécute le service d'inscription
+    // ExÃ©cute le service d'inscription
     const result = await authService.registerUser(value);
 
-    // Retourne une réponse 201 Created
+    // Retourne une rÃ©ponse 201 Created
     return res.status(201).json({
       success: true,
-      message: "Compte créé avec succès !",
+      message: "Compte crÃ©Ã© avec succÃ¨s !",
       data: result,
     });
   } catch (error) {
@@ -35,7 +35,7 @@ export const register = async (req, res, next) => {
 };
 
 /**
- * Contrôleur de connexion (Login)
+ * ContrÃ´leur de connexion (Login)
  */
 export const login = async (req, res, next) => {
   try {
@@ -45,12 +45,12 @@ export const login = async (req, res, next) => {
       return res.status(400).json({ success: false, message: error.details[0].message });
     }
 
-    // Exécute le service de connexion
+    // ExÃ©cute le service de connexion
     const result = await authService.loginUser(value);
 
     return res.status(200).json({
       success: true,
-      message: "Connexion réussie !",
+      message: "Connexion rÃ©ussie !",
       data: result,
     });
   } catch (error) {
@@ -59,8 +59,27 @@ export const login = async (req, res, next) => {
 };
 
 /**
- * Contrôleur d'oubli de mot de passe (Forgot Password)
+ * ContrÃ´leur d'oubli de mot de passe (Forgot Password)
  */
+export const googleLogin = async (req, res, next) => {
+  try {
+    const { email, name, photoURL, uid } = req.body;
+    if (!email) {
+      return res.status(400).json({ success: false, message: "L'email est requis pour la connexion Google." });
+    }
+    
+    const result = await authService.googleLogin({ email, name, photoURL, uid });
+    
+    return res.status(200).json({
+      success: true,
+      message: "Connexion Google russie !",
+      data: result,
+    });
+  } catch (error) {
+    return res.status(400).json({ success: false, message: error.message });
+  }
+};
+
 export const forgotPassword = async (req, res, next) => {
   try {
     const { error, value } = forgotPasswordDTO.validate(req.body);
@@ -80,7 +99,7 @@ export const forgotPassword = async (req, res, next) => {
 };
 
 /**
- * Contrôleur de réinitialisation du mot de passe (Reset Password)
+ * ContrÃ´leur de rÃ©initialisation du mot de passe (Reset Password)
  */
 export const resetPassword = async (req, res, next) => {
   try {
@@ -101,7 +120,7 @@ export const resetPassword = async (req, res, next) => {
 };
 
 /**
- * Récupération du profil utilisateur connecté (Me)
+ * RÃ©cupÃ©ration du profil utilisateur connectÃ© (Me)
  */
 export const getMe = async (req, res, next) => {
   try {
@@ -115,7 +134,7 @@ export const getMe = async (req, res, next) => {
 };
 
 /**
- * Endpoint de déclenchement d'ensemencement (Seed Accounts & Data)
+ * Endpoint de dÃ©clenchement d'ensemencement (Seed Accounts & Data)
  */
 export const seed = async (req, res) => {
   try {
@@ -126,3 +145,4 @@ export const seed = async (req, res) => {
     return res.status(500).json({ success: false, message: error.message });
   }
 };
+

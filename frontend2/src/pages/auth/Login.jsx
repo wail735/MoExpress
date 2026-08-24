@@ -26,11 +26,22 @@ export const Login = () => {
     if (googleLoading) return;
     setGoogleLoading(true);
     try {
+      // 1. Firebase Google Auth
       const result = await signInWithGoogle();
       if (result.success) {
-        login(result.user, result.token);
-        addToast(`Google Authentication successful! Welcome, ${result.user.name}`, "success");
-        navigate("/dashboard");
+        // 2. Envoi des donnes Google au Backend MongoDB
+        const response = await authApi.googleLogin(result.user);
+        const authData = response.data || response;
+        const dbUser = authData.user || authData.data?.user;
+        const dbToken = authData.token || authData.data?.token;
+
+        if (dbUser && dbToken) {
+          login(dbUser, dbToken);
+          addToast(`Google Authentication successful! Welcome, ${dbUser.name}`, "success");
+          navigate("/dashboard");
+        } else {
+          throw new Error("Invalid response from server");
+        }
       }
     } catch (err) {
       if (err.code === "auth/popup-blocked") {
@@ -284,5 +295,6 @@ export const Login = () => {
 };
 
 export default Login;
+
 
 

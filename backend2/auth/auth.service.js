@@ -1,27 +1,27 @@
-// ============================================================================
+﻿// ============================================================================
 // FICHIER : backend 2/auth/auth.service.js
-// RÔLE : Logique métier d'authentification (JWT, Bcrypt, Inscription, Connexion, Reset Password)
+// RÃ”LE : Logique mÃ©tier d'authentification (JWT, Bcrypt, Inscription, Connexion, Reset Password)
 // ============================================================================
 
-// 1. Importation du modèle User
+// 1. Importation du modÃ¨le User
 import User from "./auth.model.js";
 
 // 2. Importation de BcryptJS pour le hachage et la comparaison des mots de passe
 import bcrypt from "bcryptjs";
 
-// 3. Importation de jsonwebtoken pour générer et signer les tokens JWT
+// 3. Importation de jsonwebtoken pour gÃ©nÃ©rer et signer les tokens JWT
 import jwt from "jsonwebtoken";
 
-// 4. Importation de crypto natif Node.js pour générer des tokens aléatoires hexadécimaux
+// 4. Importation de crypto natif Node.js pour gÃ©nÃ©rer des tokens alÃ©atoires hexadÃ©cimaux
 import crypto from "crypto";
 
 // 5. Importation du service d'envoi d'emails Nodemailer
 import { sendPasswordResetEmail } from "../config/email.js";
 
 /**
- * Génère un jeton de sécurité JWT signé.
+ * GÃ©nÃ¨re un jeton de sÃ©curitÃ© JWT signÃ©.
  * @param {string} userId - ID unique Mongo de l'utilisateur
- * @param {string} role - Rôle de l'utilisateur (user, admin, superAdmin)
+ * @param {string} role - RÃ´le de l'utilisateur (user, admin, superAdmin)
  */
 export const generateToken = (userId, role) => {
   return jwt.sign(
@@ -35,13 +35,13 @@ export const generateToken = (userId, role) => {
  * Service d'inscription d'un nouvel utilisateur (Signup)
  */
 export const registerUser = async ({ name, email, password, role, shopName }) => {
-  // Vérifie si un utilisateur avec cet email existe déjà en BDD
+  // VÃ©rifie si un utilisateur avec cet email existe dÃ©jÃ  en BDD
   const existingUser = await User.findOne({ email: email.toLowerCase() });
   if (existingUser) {
-    throw new Error("Un compte existe déjà avec cette adresse email.");
+    throw new Error("Un compte existe dÃ©jÃ  avec cette adresse email.");
   }
 
-  // Génère un sel de hachage Bcrypt à 10 tours
+  // GÃ©nÃ¨re un sel de hachage Bcrypt Ã  10 tours
   const salt = await bcrypt.genSalt(10);
   // Hache le mot de passe en clair
   const hashedPassword = await bcrypt.hash(password, salt);
@@ -49,7 +49,7 @@ export const registerUser = async ({ name, email, password, role, shopName }) =>
   const userRole = role === "seller" ? "seller" : "buyer";
   const isPro = role === "seller" || Boolean(shopName);
 
-  // Crée l'utilisateur dans MongoDB
+  // CrÃ©e l'utilisateur dans MongoDB
   const newUser = await User.create({
     name,
     email: email.toLowerCase(),
@@ -66,7 +66,7 @@ export const registerUser = async ({ name, email, password, role, shopName }) =>
       : undefined,
   });
 
-  // Génère un token JWT d'authentification
+  // GÃ©nÃ¨re un token JWT d'authentification
   const token = generateToken(newUser._id, newUser.role);
 
   return {
@@ -79,24 +79,24 @@ export const registerUser = async ({ name, email, password, role, shopName }) =>
  * Service de connexion d'un utilisateur (Login)
  */
 export const loginUser = async ({ email, password }) => {
-  // Recherche l'utilisateur par email et inclut le mot de passe masqué avec +password
+  // Recherche l'utilisateur par email et inclut le mot de passe masquÃ© avec +password
   const user = await User.findOne({ email: email.toLowerCase() }).select("+password");
   if (!user) {
     throw new Error("Adresse email ou mot de passe incorrect.");
   }
 
-  // Vérifie si le compte est désactivé
+  // VÃ©rifie si le compte est dÃ©sactivÃ©
   if (!user.isActive) {
-    throw new Error("Votre compte a été désactivé. Veuillez contacter le support.");
+    throw new Error("Votre compte a Ã©tÃ© dÃ©sactivÃ©. Veuillez contacter le support.");
   }
 
-  // Compare le mot de passe saisi avec le hash stocké
+  // Compare le mot de passe saisi avec le hash stockÃ©
   const isMatch = await bcrypt.compare(password, user.password);
   if (!isMatch) {
     throw new Error("Adresse email ou mot de passe incorrect.");
   }
 
-  // Génère un token JWT
+  // GÃ©nÃ¨re un token JWT
   const token = generateToken(user._id, user.role);
 
   return {
@@ -115,13 +115,48 @@ export const loginUser = async ({ email, password }) => {
 /**
  * Service d'oubli de mot de passe (Forgot Password)
  */
+export const googleLogin = async ({ email, name, photoURL, uid }) => {
+  let user = await User.findOne({ email: email.toLowerCase() });
+  
+  if (!user) {
+    const randomPassword = Math.random().toString(36).slice(-10) + Math.random().toString(36).slice(-10);
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(randomPassword, salt);
+    
+    user = await User.create({
+      name,
+      email: email.toLowerCase(),
+      password: hashedPassword,
+      role: "buyer",
+      isProShop: false,
+      isSupplier: false,
+      noAds: false,
+      coins: 100, // Bonus d'inscription via Google
+    });
+  }
+
+  const token = generateToken(user._id);
+
+  return {
+    user: {
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      isProShop: user.isProShop,
+      coins: user.coins,
+    },
+    token,
+  };
+};
+
 export const forgotPassword = async (email) => {
   const user = await User.findOne({ email: email.toLowerCase() });
   if (!user) {
-    throw new Error("Aucun compte n'est associé à cette adresse email.");
+    throw new Error("Aucun compte n'est associÃ© Ã  cette adresse email.");
   }
 
-  // Génère un token de réinitialisation aléatoire de 32 octets (hexadécimal)
+  // GÃ©nÃ¨re un token de rÃ©initialisation alÃ©atoire de 32 octets (hexadÃ©cimal)
   const resetToken = crypto.randomBytes(32).toString("hex");
 
   // Enregistre le token et son expiration (10 minutes) sur l'utilisateur
@@ -132,40 +167,42 @@ export const forgotPassword = async (email) => {
   // Envoie l'email via SMTP Nodemailer
   await sendPasswordResetEmail(user.email, resetToken);
 
-  return { message: "Un email de réinitialisation vous a été envoyé." };
+  return { message: "Un email de rÃ©initialisation vous a Ã©tÃ© envoyÃ©." };
 };
 
 /**
- * Service de réinitialisation de mot de passe (Reset Password)
+ * Service de rÃ©initialisation de mot de passe (Reset Password)
  */
 export const resetPassword = async (resetToken, newPassword) => {
-  // Recherche l'utilisateur par token valide et non expiré
+  // Recherche l'utilisateur par token valide et non expirÃ©
   const user = await User.findOne({
     resetPasswordToken: resetToken,
     resetPasswordExpires: { $gt: Date.now() },
   });
 
   if (!user) {
-    throw new Error("Le jeton de réinitialisation est invalide ou a expiré.");
+    throw new Error("Le jeton de rÃ©initialisation est invalide ou a expirÃ©.");
   }
 
   // Hache le nouveau mot de passe
   const salt = await bcrypt.genSalt(10);
   user.password = await bcrypt.hash(newPassword, salt);
 
-  // Efface le token de réinitialisation
+  // Efface le token de rÃ©initialisation
   user.resetPasswordToken = undefined;
   user.resetPasswordExpires = undefined;
 
   await user.save();
 
-  return { message: "Mot de passe réinitialisé avec succès. Vous pouvez vous connecter." };
+  return { message: "Mot de passe rÃ©initialisÃ© avec succÃ¨s. Vous pouvez vous connecter." };
 };
 
 export default {
   registerUser,
   loginUser,
+  googleLogin,
   forgotPassword,
   resetPassword,
   generateToken,
 };
+
