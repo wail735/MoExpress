@@ -1,4 +1,4 @@
-﻿// ============================================================================
+// ============================================================================
 // PAGE : CoinsWallet.jsx
 // ROLE : MoExpress Virtual Coins Wallet & Packages Purchase
 // ============================================================================
@@ -41,7 +41,7 @@ export const CoinsWallet = () => {
     setLoading(true);
     try {
       const data = await apiClient.post("/payments/stripe/checkout", {
-        paymentType: "coins",
+        paymentType: "coins_pack",
         referenceId: pack.id,
         amount: pack.priceEuros,
         description: `Purchase of +${pack.coins} MoExpress Coins`,
