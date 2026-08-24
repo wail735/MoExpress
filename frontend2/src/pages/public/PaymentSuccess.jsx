@@ -27,9 +27,19 @@ export const PaymentSuccess = () => {
       try {
         await apiClient.get(`/payments/stripe/verify?session_id=${sessionId}`);
         clearCart();
+        
+        // Fetch the fresh user profile from the database so the UI (Coins, Subscription) updates immediately
         if (updateUserProfile) {
-          await updateUserProfile();
+          try {
+            const meData = await apiClient.get('/auth/me');
+            if (meData?.user) {
+              await updateUserProfile(meData.user);
+            }
+          } catch (meErr) {
+            console.error("Could not refresh user profile:", meErr);
+          }
         }
+        
         setIsVerifying(false);
       } catch (err) {
         setError(err.response?.data?.message || err.message || "Failed to verify payment.");
