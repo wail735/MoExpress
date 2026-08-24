@@ -15,7 +15,9 @@ export const subscribeToPlan = async (userId, planName) => {
   const settings = await Settings.getSettings();
 
   // Recherche la configuration dynamique du plan dans les réglages système
-  const planDetails = settings.subscriptionPlans.find((p) => p.name.toLowerCase() === planName.toLowerCase());
+  // Gère les cas où planName est "Pro" ou "plan_pro"
+  const normalizedPlanName = planName.toLowerCase().replace("plan_", "");
+  const planDetails = settings.subscriptionPlans.find((p) => p.name.toLowerCase() === normalizedPlanName);
 
   if (!planDetails) {
     throw new Error(`Le plan d'abonnement [${planName}] est invalide ou n'existe plus.`);
