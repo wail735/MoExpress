@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: moexpress-backend
+    env: node
+    rootDir: backend2
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      # Add other environment variables here like MONGO_URI, STRIPE_SECRET_KEY, etc.
