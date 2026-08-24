@@ -31,6 +31,22 @@ export const checkoutStripe = async (req, res) => {
 };
 
 /**
+ * Vérifier la session Stripe après retour
+ */
+export const verifyStripeSession = async (req, res) => {
+  try {
+    const { session_id } = req.query;
+    if (!session_id) {
+      return res.status(400).json({ success: false, message: "Session ID manquant." });
+    }
+    const payment = await paymentService.verifyStripeSession(req.user._id, session_id);
+    return res.status(200).json({ success: true, data: payment, message: "Paiement vérifié avec succès." });
+  } catch (error) {
+    return res.status(400).json({ success: false, message: error.message });
+  }
+};
+
+/**
  * Téléverser une preuve de paiement (Reçu BNA/BDL/CCP/Visa)
  */
 export const uploadProof = async (req, res) => {

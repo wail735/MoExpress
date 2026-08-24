@@ -15,6 +15,7 @@ router.get("/bank-details", paymentController.getBankDetails);
 
 // Routes protégées par authentification
 router.post("/stripe/checkout", protect, paymentController.checkoutStripe);
+router.get("/stripe/verify", protect, paymentController.verifyStripeSession);
 router.post("/upload-proof", protect, upload.single("proofImage"), paymentController.uploadProof);
 
 // Routes réservées au SuperAdmin (Validation des preuves de virement)

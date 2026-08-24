@@ -105,6 +105,58 @@ export const createStripeSession = async (userId, { paymentType, referenceId, am
 };
 
 /**
+ * Vérifier la session Stripe et finaliser le paiement
+ */
+export const verifyStripeSession = async (userId, sessionId) => {
+  const stripeKey = process.env.STRIPE_SECRET_KEY || "sk_test_mock_stripe_key";
+  const stripe = new Stripe(stripeKey);
+
+  // Vérifier la session Stripe
+  const session = await stripe.checkout.sessions.retrieve(sessionId);
+  if (session.payment_status !== "paid") {
+    throw new Error("Le paiement n'a pas encore été finalisé par Stripe.");
+  }
+
+  // Trouver la transaction correspondante
+  const payment = await Payment.findOne({ stripeSessionId: sessionId });
+  if (!payment) {
+    throw new Error("Transaction introuvable avec cette session.");
+  }
+
+  // Si déjà complété, on évite le traitement en double
+  if (payment.status === "completed") {
+    return payment;
+  }
+
+  // Mettre à jour la transaction
+  payment.status = "completed";
+  await payment.save();
+
+  // Appliquer la logique métier
+  if (payment.paymentType === "coins_pack") {
+    // referenceId est typiquement 'pack_100', 'pack_500'
+    const coinsToAdd = Number(payment.referenceId.split("_")[1]);
+    if (!isNaN(coinsToAdd) && coinsToAdd > 0) {
+      const user = await User.findById(userId);
+      if (user) {
+        user.coins = (user.coins || 0) + coinsToAdd;
+        await user.save();
+      }
+    }
+  } else if (payment.paymentType === "subscription") {
+    await subscribeToPlan(userId, payment.referenceId);
+  } else if (payment.paymentType === "order") {
+    try {
+      await Order.findByIdAndUpdate(payment.referenceId, { paymentStatus: "completed", status: "processing" });
+    } catch (e) {
+      console.warn("Could not update order with reference:", payment.referenceId);
+    }
+  }
+
+  return payment;
+};
+
+/**
  * Téléverser le reçu / preuve de paiement par virement bancaire (RIB BNA/BDL, RIP CCP, Visa)
  */
 export const uploadPaymentProof = async (userId, file, { paymentType, referenceId, method, amount }) => {
@@ -210,6 +262,7 @@ export const getPendingPaymentProofs = async (page = 1, limit = 20) => {
 export default {
   getBankDetails,
   createStripeSession,
+  verifyStripeSession,
   uploadPaymentProof,
   reviewPaymentProof,
   getPendingPaymentProofs,
