@@ -1,4 +1,4 @@
-// ============================================================================
+﻿// ============================================================================
 // PAGE : Login.jsx
 // ROLE : User Sign In Form with Firebase Google Authentication & JWT Fallback
 // ============================================================================
@@ -20,7 +20,11 @@ export const Login = () => {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const [googleLoading, setGoogleLoading] = useState(false);
+
   const handleGoogleLogin = async () => {
+    if (googleLoading) return;
+    setGoogleLoading(true);
     try {
       const result = await signInWithGoogle();
       if (result.success) {
@@ -29,7 +33,15 @@ export const Login = () => {
         navigate("/dashboard");
       }
     } catch (err) {
-      addToast("Google Sign-In failed or was cancelled.", "error");
+      if (err.code === "auth/popup-blocked") {
+        addToast("Popup blocked by browser. Please allow popups for this site.", "error");
+      } else if (err.code === "auth/cancelled-popup-request" || err.code === "auth/popup-closed-by-user") {
+        addToast("Google sign-in was cancelled.", "warning");
+      } else {
+        addToast("Google Sign-In failed. Please try again.", "error");
+      }
+    } finally {
+      setGoogleLoading(false);
     }
   };
 
@@ -128,7 +140,8 @@ export const Login = () => {
         <button
           type="button"
           onClick={handleGoogleLogin}
-          className="w-full bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-800 dark:text-white font-bold text-xs sm:text-sm py-3 rounded-2xl border border-gray-300 dark:border-gray-600 transition flex items-center justify-center gap-3 shadow-sm"
+          disabled={googleLoading}
+          className={`w-full bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-800 dark:text-white font-bold text-xs sm:text-sm py-3 rounded-2xl border border-gray-300 dark:border-gray-600 transition flex items-center justify-center gap-3 shadow-sm ${googleLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
         >
           <svg className="w-5 h-5" viewBox="0 0 24 24">
             <path
@@ -186,7 +199,7 @@ export const Login = () => {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
+                placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
                 required
                 className="w-full bg-gray-100 dark:bg-gray-800 text-xs sm:text-sm p-3 pl-10 rounded-xl border border-gray-200 dark:border-gray-700 focus:outline-none focus:border-orange-500"
               />
@@ -271,3 +284,5 @@ export const Login = () => {
 };
 
 export default Login;
+
+

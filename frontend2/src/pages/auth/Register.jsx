@@ -1,4 +1,4 @@
-// ============================================================================
+﻿// ============================================================================
 // PAGE : Register.jsx
 // ROLE : User Registration Form with Role Selection & Firebase Google Authentication
 // ============================================================================
@@ -167,7 +167,7 @@ export const Register = () => {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
+                placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
                 required
                 className="w-full bg-gray-100 dark:bg-gray-800 text-xs sm:text-sm p-3 pl-10 rounded-xl border border-gray-200 dark:border-gray-700 focus:outline-none focus:border-orange-500"
               />
@@ -240,3 +240,4 @@ export const Register = () => {
 };
 
 export default Register;
+
